@@ -400,13 +400,6 @@ public class PixelScene extends Scene {
      * @param pane The PixelPane to initialize tools for
      */
     private void initTools(PixelPane pane) {
-        // pixelPane.setPrefWidth(pixelPane.getColumns() * MIN_CELL_SIZE);
-        // pixelPane.setPrefHeight(pixelPane.getRows() * MIN_CELL_SIZE);
-
-        // Label rowLabel = new Label("Rows: " + pane.getRows());
-        // rowLabel.setTextFill(FONT_COLOR);
-        // Label colLabel = new Label("Columns: " + pane.getColumns());
-        // colLabel.setTextFill(FONT_COLOR);
         bucketView.setPreserveRatio(false);
         bucketView.setFitWidth(80);
         bucketView.setFitHeight(80);
@@ -458,10 +451,6 @@ public class PixelScene extends Scene {
         backBoard.setAlignment(Pos.TOP_LEFT);
         backBoard.setStyle(colorToString(pane.getGridLineColor()));
         scrollPane = new ScrollPane(backBoard);
-        // pane.prefWidthProperty().bind(scrollPane.widthProperty());
-        // pane.prefHeightProperty().bind(scrollPane.heightProperty());
-        // backBoard.prefWidthProperty().bind(scrollPane.widthProperty());
-        // backBoard.prefHeightProperty().bind(scrollPane.heightProperty());
 
         scrollPane.setFitToWidth(false);
         scrollPane.setFitToHeight(false);
@@ -470,7 +459,7 @@ public class PixelScene extends Scene {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setStyle("-fx-background-color: transparent");
 
-        sideMenu = new VBox(picker/*, rowLabel, colLabel*/, saveAs, save, discardButton, colorsBox, change, toggleGrid, bucketView, canvasName, saveMessage);
+        sideMenu = new VBox(picker, saveAs, save, discardButton, colorsBox, change, toggleGrid, bucketView, canvasName, saveMessage);
         picker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
         picker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.08));
         saveAs.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.8));
