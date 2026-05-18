@@ -49,8 +49,6 @@ import javafx.stage.Screen;
  */
 public class PixelScene extends Scene {
 
-    private final double MIN_CELL_SIZE = 20;
-
     private static BorderPane root;
     private final Color FONT_COLOR = Color.WHITE;
     private Label startMes, buildMes, canvasName, saveMessage;
@@ -175,7 +173,7 @@ public class PixelScene extends Scene {
     }
 
     /**
-     * This method initializes the grid of the lite brite.
+     * This method initializes the grid.
      */
     private void initGrid() {
         picker = new ColorPicker();
@@ -402,8 +400,9 @@ public class PixelScene extends Scene {
      * @param pane The PixelPane to initialize tools for
      */
     private void initTools(PixelPane pane) {
-        pixelPane.setPrefWidth(pixelPane.getColumns() * MIN_CELL_SIZE);
-        pixelPane.setPrefHeight(pixelPane.getRows() * MIN_CELL_SIZE);
+        // pixelPane.setPrefWidth(pixelPane.getColumns() * MIN_CELL_SIZE);
+        // pixelPane.setPrefHeight(pixelPane.getRows() * MIN_CELL_SIZE);
+
         // Label rowLabel = new Label("Rows: " + pane.getRows());
         // rowLabel.setTextFill(FONT_COLOR);
         // Label colLabel = new Label("Columns: " + pane.getColumns());
@@ -456,16 +455,16 @@ public class PixelScene extends Scene {
         change.prefHeightProperty().bind(saveAs.prefHeightProperty());
 
         backBoard = new VBox(pane);
-        backBoard.setAlignment(Pos.CENTER);
+        backBoard.setAlignment(Pos.TOP_LEFT);
         backBoard.setStyle(colorToString(pane.getGridLineColor()));
         scrollPane = new ScrollPane(backBoard);
-        pane.prefWidthProperty().bind(scrollPane.widthProperty());
-        pane.prefHeightProperty().bind(scrollPane.heightProperty());
-        backBoard.prefWidthProperty().bind(scrollPane.widthProperty());
-        backBoard.prefHeightProperty().bind(scrollPane.heightProperty());
+        // pane.prefWidthProperty().bind(scrollPane.widthProperty());
+        // pane.prefHeightProperty().bind(scrollPane.heightProperty());
+        // backBoard.prefWidthProperty().bind(scrollPane.widthProperty());
+        // backBoard.prefHeightProperty().bind(scrollPane.heightProperty());
 
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
+        scrollPane.setFitToWidth(false);
+        scrollPane.setFitToHeight(false);
 
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);

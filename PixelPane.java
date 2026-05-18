@@ -13,7 +13,9 @@ import javafx.scene.paint.Color;
  */
 public class PixelPane extends Pane {
 
-    // private final double CELL_SIZE = 20;
+    private final double DEFAULT_CELL_SIZE = 20;
+    private double zoom = 1.0;
+    private double offSetX = 0, offSetY = 0;
 
     private int rows, cols;
     private Color[][] gridColors;
@@ -51,8 +53,8 @@ public class PixelPane extends Pane {
         }
 
         canvas = new Canvas();
-        canvas.widthProperty().bind(this.widthProperty());
-        canvas.heightProperty().bind(this.heightProperty());
+        updateCanvasSize();
+        setPrefSize(columns * DEFAULT_CELL_SIZE, rows * DEFAULT_CELL_SIZE);
         this.name = "untitled";
         getChildren().add(canvas);
 
@@ -69,34 +71,27 @@ public class PixelPane extends Pane {
     public void drawGrid() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
 
-        double paneWidth = canvas.getWidth();
-        double paneHeight = canvas.getHeight();
-
         gc.setFill(backBoardColor);
-        gc.fillRect(0, 0, paneWidth, paneHeight);
+        double size = cellSize();
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                double x1 = Math.round(j * paneWidth / cols);
-                double y1 = Math.round(i * paneHeight / rows);
-                double x2 = Math.round((j + 1) * paneWidth / cols);
-                double y2 = Math.round((i + 1) * paneHeight / rows);
-                double w = x2 - x1;
-                double h = y2 - y1;
+                double x1 = j * size;
+                double y1 = i * size;
                 gc.setFill(gridColors[i][j]);
-                gc.fillRect(x1, y1, w, h);
+                gc.fillRect(x1, y1, size, size);
             }
         }
 
         if (showGridLines) {
             gc.setStroke(backBoardColor);
             for (int i = 0; i <= rows; i++) {
-                double y = Math.round(i * paneHeight / rows);
-                gc.strokeLine(0, y, paneWidth, y);
+                double y = i * size;
+                gc.strokeLine(0, y, cols * size, y);
             }
             for (int i = 0; i <= cols; i++) {
-                double x = Math.round(i * paneWidth / cols);
-                gc.strokeLine(x, 0, x, paneHeight);
+                double x = i * size;
+                gc.strokeLine(x, 0, x, rows * size);
             }
         }
     }
@@ -104,6 +99,13 @@ public class PixelPane extends Pane {
     private void mouseEvents() {
         canvas.setOnMousePressed(e -> paintCell(e.getX(), e.getY()));
         canvas.setOnMouseDragged(e -> paintCell(e.getX(), e.getY()));
+        canvas.setOnScroll(e -> {
+            if (e.getDeltaY() > 0) {
+                zoomIn();
+            } else {
+                zoomOut();
+            }
+        });
     }
 
     public void toggleGridLines() {
@@ -116,11 +118,9 @@ public class PixelPane extends Pane {
     }
 
     private void paintCell(double x, double y) {
-        double cellWidth = canvas.getWidth() / cols;
-        double cellHeight = canvas.getHeight() / rows;
-
-        int col = (int) (x / cellWidth);
-        int row = (int) (y / cellHeight);
+        double size = cellSize();
+        int col = (int) (x / size);
+        int row = (int) (y / size);
 
         if (row >= 0 && row < rows && col >= 0 && col < cols) {
             if (bucket) {
@@ -205,12 +205,51 @@ public class PixelPane extends Pane {
             gridColors[rowIndex][colIndex] = Color.web(color);
         }
         canvas = new Canvas();
-        canvas.widthProperty().bind(this.widthProperty());
-        canvas.heightProperty().bind(this.heightProperty());
+        updateCanvasSize();
+        setPrefSize(cols * DEFAULT_CELL_SIZE, rows * DEFAULT_CELL_SIZE);
+
         getChildren().add(canvas);
 
         drawGrid();
         mouseEvents();
+    }
+
+    private double cellSize() {
+        return DEFAULT_CELL_SIZE * zoom;
+    }
+
+    private void updateCanvasSize() {
+        double size = cellSize();
+        canvas.setWidth(cols * size);
+        canvas.setHeight(rows * size);
+    }
+
+    public void zoomIn() {
+        zoom = Math.min(10.0, zoom + 0.1);
+        updateCanvasSize();
+        drawGrid();
+    }
+
+    public void zoomOut() {
+        zoom = Math.max(0.2, zoom - 0.1);
+        updateCanvasSize();
+        drawGrid();
+    }
+
+    private int toColumn(double x) {
+        return (int) ((x - offSetX) / cellSize());
+    }
+
+    private int toRow(double y) {
+        return (int) ((y - offSetY) / cellSize());
+    }
+
+    private double screenX(int col) {
+        return col * cellSize() + offSetX;
+    }
+
+    private double screenY(int row) {
+        return row * cellSize() + offSetY;
     }
 
     /**
