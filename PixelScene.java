@@ -13,6 +13,7 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
@@ -452,8 +453,15 @@ public class PixelScene extends Scene {
         backBoard.setStyle(colorToString(pane.getGridLineColor()));
         scrollPane = new ScrollPane(backBoard);
 
+        scrollPane.setPannable(true);
         scrollPane.setFitToWidth(false);
         scrollPane.setFitToHeight(false);
+
+        scrollPane.addEventFilter(javafx.scene.input.ScrollEvent.SCROLL, e -> {
+            if (e.getTarget() instanceof Canvas) {
+                return;
+            }
+        });
 
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);

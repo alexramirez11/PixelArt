@@ -14,6 +14,9 @@ import javafx.scene.paint.Color;
 public class PixelPane extends Pane {
 
     private final double DEFAULT_CELL_SIZE = 20;
+    private final double MIN_CELL_SIZE = 6.0;
+    private final double MIN_ZOOM = 0.8;
+    private final double MAX_ZOOM = 8.0;
     private double zoom = 1.0;
     private double offSetX = 0, offSetY = 0;
 
@@ -71,13 +74,15 @@ public class PixelPane extends Pane {
     public void drawGrid() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
 
+        gc.setLineWidth(1);
         gc.setFill(backBoardColor);
         double size = cellSize();
+        size = Math.max(size, MIN_CELL_SIZE);
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                double x1 = j * size;
-                double y1 = i * size;
+                double x1 = Math.round(screenX(j)) + 0.5;
+                double y1 = Math.round(screenY(i)) + 0.5;
                 gc.setFill(gridColors[i][j]);
                 gc.fillRect(x1, y1, size, size);
             }
@@ -86,12 +91,12 @@ public class PixelPane extends Pane {
         if (showGridLines) {
             gc.setStroke(backBoardColor);
             for (int i = 0; i <= rows; i++) {
-                double y = i * size;
-                gc.strokeLine(0, y, cols * size, y);
+                double y = screenY(i);
+                gc.strokeLine(screenX(0), y, screenX(cols), y);
             }
             for (int i = 0; i <= cols; i++) {
-                double x = i * size;
-                gc.strokeLine(x, 0, x, rows * size);
+                double x = screenX(i);
+                gc.strokeLine(x, screenY(0), x, screenY(rows));
             }
         }
     }
@@ -100,11 +105,19 @@ public class PixelPane extends Pane {
         canvas.setOnMousePressed(e -> paintCell(e.getX(), e.getY()));
         canvas.setOnMouseDragged(e -> paintCell(e.getX(), e.getY()));
         canvas.setOnScroll(e -> {
-            if (e.getDeltaY() > 0) {
-                zoomIn();
-            } else {
-                zoomOut();
+            if (e.isInertia()) {
+                return;
             }
+            if (e.getTouchCount() > 0) {
+                return;
+            }
+            if (Math.abs(e.getDeltaY()) < 10) {
+                return;
+            }
+            double factor = (e.getDeltaY() > 0) ? 1.1 : 0.9;
+            zoomAt(e.getX(), e.getY(), factor);
+
+            e.consume();
         });
     }
 
@@ -118,9 +131,8 @@ public class PixelPane extends Pane {
     }
 
     private void paintCell(double x, double y) {
-        double size = cellSize();
-        int col = (int) (x / size);
-        int row = (int) (y / size);
+        int col = toColumn(x);
+        int row = toRow(y);
 
         if (row >= 0 && row < rows && col >= 0 && col < cols) {
             if (bucket) {
@@ -250,6 +262,21 @@ public class PixelPane extends Pane {
 
     private double screenY(int row) {
         return row * cellSize() + offSetY;
+    }
+
+    public void zoomAt(double mx, double my, double zoomFactor) {
+        double oldZoom = zoom;
+        double newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * zoomFactor));
+
+        double worldX = (mx - offSetX) / oldZoom;
+        double worldY = (my - offSetY) / oldZoom;
+
+        zoom = newZoom;
+
+        offSetX = Math.round(mx - worldX * zoom);
+        offSetY = Math.round(my - worldY * zoom);
+
+        drawGrid();
     }
 
     /**
