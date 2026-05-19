@@ -11,8 +11,10 @@ import javax.imageio.ImageIO;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.ColorPicker;
@@ -39,6 +41,7 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -358,9 +361,9 @@ public class PixelScene extends Scene {
         DateTimeFormatter.ofPattern("MMMM d, yyyy 'at' h:mm a");
         pixelPane.setLastSavedTime(now.format(formatter));
         saveMessage.setText("Last saved on:\n" + pixelPane.getLastSavedTime());
+        
+        WritableImage image = pixelPane.exportImage();
 
-        WritableImage image = new WritableImage((int)pixelPane.getWidth(), (int)pixelPane.getHeight());
-        pixelPane.snapshot(null, image);
         File output = new File("Saved_Images", name + ".png");
         try {
             ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", output);
@@ -448,12 +451,10 @@ public class PixelScene extends Scene {
         change.prefWidthProperty().bind(saveAs.prefWidthProperty());
         change.prefHeightProperty().bind(saveAs.prefHeightProperty());
 
-        backBoard = new VBox(pane);
-        backBoard.setAlignment(Pos.TOP_LEFT);
-        backBoard.setStyle(colorToString(pane.getGridLineColor()));
-        scrollPane = new ScrollPane(backBoard);
+        StackPane container = new StackPane(pane);
+        scrollPane = new ScrollPane(container);
 
-        scrollPane.setPannable(true);
+        scrollPane.setPannable(false);
         scrollPane.setFitToWidth(false);
         scrollPane.setFitToHeight(false);
 
