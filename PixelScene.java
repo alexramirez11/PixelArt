@@ -11,10 +11,8 @@ import javax.imageio.ImageIO;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.ColorPicker;
@@ -57,7 +55,7 @@ public class PixelScene extends Scene {
     private final Color FONT_COLOR = Color.WHITE;
     private Label startMes, buildMes, canvasName, saveMessage;
     private Button startButton, createButton, saveAs, save, loadButton, discardButton, change, toggleGrid;
-    private VBox startBox, settingsBox, sideMenu, backBoard;
+    private VBox startBox, settingsBox, sideMenu;
     private ComboBox<String> colorsBox;
     private TextField widthText, heightText;
     private ColorPicker picker;
@@ -361,7 +359,7 @@ public class PixelScene extends Scene {
         DateTimeFormatter.ofPattern("MMMM d, yyyy 'at' h:mm a");
         pixelPane.setLastSavedTime(now.format(formatter));
         saveMessage.setText("Last saved on:\n" + pixelPane.getLastSavedTime());
-        
+
         WritableImage image = pixelPane.exportImage();
 
         File output = new File("Saved_Images", name + ".png");
