@@ -20,7 +20,7 @@ public class PixelPane extends Pane {
 
     private final Affine TRANSFORM = new Affine();
 
-    private final double DEFAULT_CELL_SIZE = 20;
+    private final double DISPLAY_CELL_SIZE = 20;
     private final double MIN_ZOOM = 0.8;
     private final double MAX_ZOOM = 8.0;
 
@@ -67,7 +67,7 @@ public class PixelPane extends Pane {
     }
 
     private void initializeCanvas() {
-        canvas = new Canvas(cols * DEFAULT_CELL_SIZE, rows * DEFAULT_CELL_SIZE);
+        canvas = new Canvas(cols * DISPLAY_CELL_SIZE, rows * DISPLAY_CELL_SIZE);
         getChildren().add(canvas);
         mouseEvents();
         requestRedraw();
@@ -82,7 +82,7 @@ public class PixelPane extends Pane {
         gc.setTransform(TRANSFORM);
         gc.setFill(backBoardColor);
 
-        double size = DEFAULT_CELL_SIZE;
+        double size = DISPLAY_CELL_SIZE;
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -235,12 +235,12 @@ public class PixelPane extends Pane {
 
     private int toColumn(double x) {
         double worldX = (x - offSetX) / zoom;
-        return (int) (worldX / DEFAULT_CELL_SIZE);
+        return (int) (worldX / DISPLAY_CELL_SIZE);
     }
 
     private int toRow(double y) {
         double worldY = (y - offSetY) / zoom;
-        return (int) (worldY / DEFAULT_CELL_SIZE);
+        return (int) (worldY / DISPLAY_CELL_SIZE);
     }
 
     public void zoomAt(double mx, double my, double zoomFactor) {
@@ -289,10 +289,10 @@ public class PixelPane extends Pane {
 
         TRANSFORM.setToIdentity();
 
-        drawGrid();
+        drawExportImage();
 
-        int width = (int)(cols * DEFAULT_CELL_SIZE);
-        int height = (int)(rows * DEFAULT_CELL_SIZE);
+        int width = (int)(cols);
+        int height = (int)(rows);
 
         WritableImage image = new WritableImage(width, height);
 
@@ -312,6 +312,18 @@ public class PixelPane extends Pane {
         drawGrid();
 
         return image;
+    }
+
+    private void drawExportImage() {
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                gc.setFill(gridColors[row][col]);
+                gc.fillRect(col, row, 1, 1);
+            }
+        }
     }
 
     /**
