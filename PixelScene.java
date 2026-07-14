@@ -15,6 +15,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -53,18 +54,19 @@ public class PixelScene extends Scene {
 
     private static BorderPane root;
     private final Color FONT_COLOR = Color.WHITE;
-    private Label startMes, buildMes, canvasName, saveMessage;
+    private Label startMes, buildMes, canvasName, saveMessage, transparencyColor;
     private Button startButton, createButton, saveAs, save, loadButton, discardButton, change, toggleGrid;
     private VBox startBox, settingsBox, sideMenu;
     private ComboBox<String> colorsBox;
     private TextField widthText, heightText;
-    private ColorPicker picker;
+    private ColorPicker picker, removePicker;
     private PixelPane pixelPane;
     private ScrollPane scrollPane;
     private LinkedList<Button> loadList;
     private Image bucketOnImage = new Image("Saved_Images/bucket-on.png");
     private Image bucketOffImage = new Image("saved_Images/bucket-off.png");
     private ImageView bucketView = new ImageView(bucketOffImage);
+    private CheckBox transparent;
     
     /**
      * This constructor is used to create an instance of the pixel board.
@@ -179,6 +181,8 @@ public class PixelScene extends Scene {
      */
     private void initGrid() {
         picker = new ColorPicker();
+        removePicker = new ColorPicker();
+        transparent = new CheckBox("Make this color\ntransparent");
         int height = 0, width = 0;
         try {
             height = Integer.parseInt(heightText.getText());
@@ -320,6 +324,8 @@ public class PixelScene extends Scene {
     private void processLoad(String fileName) {
         File input = new File("Saved_Images_Data", fileName + ".txt");
         picker = new ColorPicker();
+        removePicker = new ColorPicker();
+        transparent = new CheckBox("Make this color\ntransparent");
         try {
             Scanner scan = new Scanner(input);
             LinkedList<String> metaData = new LinkedList<String>();
@@ -360,7 +366,7 @@ public class PixelScene extends Scene {
         pixelPane.setLastSavedTime(now.format(formatter));
         saveMessage.setText("Last saved on:\n" + pixelPane.getLastSavedTime());
 
-        WritableImage image = pixelPane.exportImage();
+        WritableImage image = pixelPane.exportImage(transparent.isSelected(), removePicker.getValue());
 
         File output = new File("Saved_Images", name + ".png");
         try {
@@ -407,6 +413,11 @@ public class PixelScene extends Scene {
         bucketView.setFitHeight(80);
         bucketView.setOnMouseClicked(this::processBucketClick);
         bucketView.setCursor(Cursor.HAND);
+
+        transparencyColor = new Label("Transparncy Color:");
+        transparencyColor.setTextFill(FONT_COLOR);
+        transparent.setTextFill(FONT_COLOR);
+
         canvasName = new Label("Canvas Name:\n" + pane);
         canvasName.setTextFill(FONT_COLOR);
         saveAs = new Button("Save As");
@@ -437,7 +448,6 @@ public class PixelScene extends Scene {
         toggleGrid.setOnAction(this::processGridToggle);
         toggleGrid.setCursor(Cursor.HAND);
 
-
         saveAs.prefHeightProperty().bind(root.heightProperty().multiply(0.05));
 
         save.prefWidthProperty().bind(saveAs.prefWidthProperty());
@@ -466,12 +476,16 @@ public class PixelScene extends Scene {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setStyle("-fx-background-color: transparent");
 
-        sideMenu = new VBox(picker, saveAs, save, discardButton, colorsBox, change, toggleGrid, bucketView, canvasName, saveMessage);
+        sideMenu = new VBox(picker, saveAs, save, discardButton, colorsBox, change, toggleGrid, bucketView, canvasName, saveMessage, transparencyColor, removePicker, transparent);
         picker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
         picker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.08));
+        removePicker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
+        removePicker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
+        transparent.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
+        transparent.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
         saveAs.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.8));
         VBox.setVgrow(sideMenu, Priority.ALWAYS);
-        sideMenu.setSpacing(30);
+        sideMenu.setSpacing(20);
         sideMenu.setFillWidth(true);
         sideMenu.setAlignment(Pos.TOP_CENTER);
 

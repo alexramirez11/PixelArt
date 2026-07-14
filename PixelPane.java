@@ -6,6 +6,8 @@ import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ColorPicker;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -278,7 +280,7 @@ public class PixelPane extends Pane {
      * This method creates a writable image of the canvas, only containing the grid and everything on it.
      * @return A WritableImage object to be exported as a png file.
      */
-    public WritableImage exportImage() {
+    public WritableImage exportImage(boolean transparent, Color value) {
         double oldZoom = zoom;
         double oldOffsetX = offSetX;
         double oldOffsetY = offSetY;
@@ -300,6 +302,20 @@ public class PixelPane extends Pane {
         params.setViewport(new Rectangle2D(0, 0, width, height));
 
         canvas.snapshot(params, image);
+
+        if (transparent) {
+            PixelReader reader = image.getPixelReader();
+            PixelWriter writer = image.getPixelWriter();
+
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    Color c = reader.getColor(x, y);
+                    if (colorsAreEqual(c, value)) {
+                        writer.setColor(x, y, Color.TRANSPARENT);
+                    }
+                }
+            }
+        }
 
         zoom = oldZoom;
         offSetX = oldOffsetX;
