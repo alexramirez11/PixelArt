@@ -23,7 +23,7 @@ public class PixelPane extends Pane {
     private final Affine TRANSFORM = new Affine();
 
     private final double DISPLAY_CELL_SIZE = 20;
-    private final double MIN_ZOOM = 0.8;
+    private final double MIN_ZOOM = 0.1;
     private final double MAX_ZOOM = 8.0;
 
     private double zoom = 1.0;
@@ -223,16 +223,6 @@ public class PixelPane extends Pane {
             gridColors[rowIndex][colIndex] = Color.web(color);
         }
         initializeCanvas();
-    }
-
-    public void zoomIn() {
-        zoom = Math.min(10.0, zoom + 0.1);    
-        requestRedraw();
-    }
-
-    public void zoomOut() {
-        zoom = Math.max(0.2, zoom - 0.1);
-        requestRedraw();
     }
 
     private int toColumn(double x) {
