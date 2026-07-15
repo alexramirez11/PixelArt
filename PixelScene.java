@@ -55,7 +55,7 @@ public class PixelScene extends Scene {
     private static BorderPane root;
     private final Color FONT_COLOR = Color.WHITE;
     private Label startMes, buildMes, canvasName, saveMessage, transparencyColor;
-    private Button startButton, createButton, saveAs, save, loadButton, discardButton, change, toggleGrid;
+    private Button startButton, createButton, saveAs, save, loadButton, discardButton, change, toggleGrid, flip;
     private VBox startBox, settingsBox, sideMenu;
     private ComboBox<String> colorsBox;
     private TextField widthText, heightText;
@@ -354,6 +354,10 @@ public class PixelScene extends Scene {
         pixelPane.toggleGridLines();
     }
 
+    private void processFlip(ActionEvent e) {
+        pixelPane.flipHorizontal();
+    }
+
     /**
      * This method saves the current lite brite pane open. A png screenshot of the PixelPane is saved in the Saved_Images folder
      * and the metadata for it is saved in the Saved_Images_Data folder, both of which should be in this directory.
@@ -456,6 +460,11 @@ public class PixelScene extends Scene {
         discardButton.prefWidthProperty().bind(saveAs.prefWidthProperty());
         discardButton.prefHeightProperty().bind(saveAs.prefHeightProperty());
 
+        flip = new Button("Flip");
+        flip.setStyle("-fx-background-color: pink");
+        flip.setTextFill(FONT_COLOR);
+        flip.setOnAction(this::processFlip);
+
         change.prefWidthProperty().bind(saveAs.prefWidthProperty());
         change.prefHeightProperty().bind(saveAs.prefHeightProperty());
 
@@ -476,7 +485,7 @@ public class PixelScene extends Scene {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setStyle("-fx-background-color: transparent");
 
-        sideMenu = new VBox(picker, saveAs, save, discardButton, colorsBox, change, toggleGrid, bucketView, canvasName, saveMessage, transparencyColor, removePicker, transparent);
+        sideMenu = new VBox(picker, saveAs, save, discardButton, colorsBox, change, toggleGrid, flip, bucketView, canvasName, saveMessage, transparencyColor, removePicker, transparent);
         picker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
         picker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.08));
         removePicker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
@@ -485,7 +494,7 @@ public class PixelScene extends Scene {
         transparent.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
         saveAs.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.8));
         VBox.setVgrow(sideMenu, Priority.ALWAYS);
-        sideMenu.setSpacing(20);
+        sideMenu.setSpacing(10);
         sideMenu.setFillWidth(true);
         sideMenu.setAlignment(Pos.TOP_CENTER);
 

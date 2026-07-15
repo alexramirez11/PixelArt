@@ -320,6 +320,9 @@ public class PixelPane extends Pane {
         return image;
     }
 
+    /**
+     * This method draws the image in the final state to be ready for exporting to PNG format.
+     */
     private void drawExportImage() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -330,6 +333,21 @@ public class PixelPane extends Pane {
                 gc.fillRect(col, row, 1, 1);
             }
         }
+    }
+
+    /**
+     * This method horizontally flips the image in real time while preserving all colors.
+     */
+    public void flipHorizontal() {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < (cols / 2); col++) {
+                Color temp = gridColors[row][col];
+                gridColors[row][col] = gridColors[row][cols - 1 - col];
+                gridColors[row][cols - 1 - col] = temp;
+            }
+        }
+
+        requestRedraw();
     }
 
     /**
