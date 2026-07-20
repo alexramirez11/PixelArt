@@ -228,7 +228,6 @@ public class PixelScene extends Scene {
      * @param e ActionEvent object to activate this method when a button is clicked
      */
     private void processBuild(ActionEvent e) {
-        // root.getChildren().clear();
         initGrid();
     }
 

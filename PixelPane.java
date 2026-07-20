@@ -320,6 +320,10 @@ public class PixelPane extends Pane {
 
         drawGrid();
 
+        if (scale > 1) {
+            return scaleImage(image, scale);
+        }
+
         return image;
     }
 
@@ -336,6 +340,31 @@ public class PixelPane extends Pane {
                 gc.fillRect(col, row, 1, 1);
             }
         }
+    }
+
+    private WritableImage scaleImage(WritableImage src, int scale) {
+        int ow = (int) src.getWidth();
+        int oh = (int) src.getHeight();
+        int nw = ow * scale;
+        int nh = oh * scale;
+
+        WritableImage scaled = new WritableImage(nw, nh);
+
+        PixelReader reader = src.getPixelReader();
+        PixelWriter writer = scaled.getPixelWriter();
+
+        for (int y = 0; y < oh; y++) {
+            for (int x = 0; x < ow; x++) {
+                Color pixel = reader.getColor(x, y);
+
+                for (int dy = 0; dy < scale; dy++) {
+                    for (int dx = 0; dx < scale; dx++) {
+                        writer.setColor(x * scale + dx, y * scale + dy, pixel);
+                    }
+                }
+            }
+        }
+        return scaled;
     }
 
     /**
