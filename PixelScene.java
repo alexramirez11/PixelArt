@@ -364,18 +364,11 @@ public class PixelScene extends Scene {
         pixelPane.flipHorizontal();
     }
 
-    /**
-     * This method saves the current lite brite pane open. A png screenshot of the PixelPane is saved in the Saved_Images folder
-     * and the metadata for it is saved in the Saved_Images_Data folder, both of which should be in this directory.
-     * @param name String representation of the name of the PixelPane to save
-     */
-    private void processSave(String name) {
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter formatter =
-        DateTimeFormatter.ofPattern("MMMM d, yyyy 'at' h:mm a");
-        pixelPane.setLastSavedTime(now.format(formatter));
-        saveMessage.setText("Last saved on:\n" + pixelPane.getLastSavedTime());
+    private void processExport(ActionEvent e) {
+        exportOnly(pixelPane + "");
+    }
 
+    private void exportOnly(String name) {
         WritableImage image = pixelPane.exportImage(transparent.isSelected(), removePicker.getValue());
 
         File output = new File("Saved_Images", name + ".png");
@@ -386,6 +379,20 @@ public class PixelScene extends Scene {
             System.err.println("Error: Failed to save screenshot: " + exception.getMessage());
             System.exit(1);
         }
+    }
+
+    /**
+     * This method saves the current PixelPane open. A png screenshot of the PixelPane is saved in the Saved_Images folder
+     * and the metadata for it is saved in the Saved_Images_Data folder, both of which should be in this directory.
+     * @param name String representation of the name of the PixelPane to save
+     */
+    private void processSave(String name) {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter =
+        DateTimeFormatter.ofPattern("MMMM d, yyyy 'at' h:mm a");
+        pixelPane.setLastSavedTime(now.format(formatter));
+        saveMessage.setText("Last saved on:\n" + pixelPane.getLastSavedTime());
+
         File boardData = new File("Saved_Images_Data", name + ".txt");
         try {
             FileWriter writer = new FileWriter(boardData);
@@ -437,12 +444,14 @@ public class PixelScene extends Scene {
         MenuItem saveItem = new MenuItem("Save");
         MenuItem saveAsItem = new MenuItem("Save As");
         MenuItem discardItem = new MenuItem("Exit");
+        MenuItem exportItem = new MenuItem("Export");
 
-        saveOptions.getItems().addAll(saveItem, saveAsItem, discardItem);
+        saveOptions.getItems().addAll(saveItem, saveAsItem, exportItem, discardItem);
         saveOptions.setTextFill(FONT_COLOR);
         saveItem.setOnAction(this::saveNoExit);
         saveAsItem.setOnAction(this::saveSettings);
         discardItem.setOnAction(this::processDiscard);
+        exportItem.setOnAction(this::processExport);
 
         saveMessage = new Label("Last saved on:\n" + pixelPane.getLastSavedTime());
         saveMessage.setTextFill(Color.LIMEGREEN);
@@ -485,7 +494,7 @@ public class PixelScene extends Scene {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setStyle("-fx-background-color: transparent");
 
-        sideMenu = new VBox(picker,saveOptions, colorsBox, change, toggleGrid, flip, bucketView, canvasName, saveMessage, transparencyColor, removePicker, transparent);
+        sideMenu = new VBox(picker, saveOptions, colorsBox, change, toggleGrid, flip, bucketView, canvasName, saveMessage, transparencyColor, removePicker, transparent);
         picker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
         picker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.08));
         removePicker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
