@@ -268,9 +268,12 @@ public class PixelPane extends Pane {
 
     /**
      * This method creates a writable image of the canvas, only containing the grid and everything on it.
+     * @param transparent The boolean flag to indicate if the given color should be transparent
+     * @param value The color to make transparent if the flag is set
+     * @param scale The value to scale by using the nearest neighbor algorithm
      * @return A WritableImage object to be exported as a png file.
      */
-    public WritableImage exportImage(boolean transparent, Color value) {
+    public WritableImage exportImage(boolean transparent, Color value, int scale) {
         double oldZoom = zoom;
         double oldOffsetX = offSetX;
         double oldOffsetY = offSetY;
