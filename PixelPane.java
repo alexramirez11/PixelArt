@@ -25,6 +25,7 @@ public class PixelPane extends Pane {
     private final double DISPLAY_CELL_SIZE = 20;
     private final double MIN_ZOOM = 0.1;
     private final double MAX_ZOOM = 8.0;
+    private final int RECENT_CAPACITY = 5;
 
     private double zoom = 1.0;
     private double offSetX = 0, offSetY = 0;
@@ -33,11 +34,12 @@ public class PixelPane extends Pane {
     private Canvas canvas;
     private ColorPicker picker;
     private Color gridLineColor = Color.WHITE;
-    private boolean bucket = false;
+    private boolean bucket = false, isOnRecent = false;
     private String name;
     private String lastSavedTime;
     private boolean showGridLines = true;
     private boolean redrawQueued = false;
+    private LinkedList<Color> recentColors;
     
     /**
      * This constructor is generating a new instance of the PixelPane.
@@ -52,6 +54,7 @@ public class PixelPane extends Pane {
         this.rows = rows;
         this.cols = columns;
         this.picker = picker;
+        recentColors = new LinkedList<>();
         lastSavedTime = "never";
         if (color == null) {
             color = "black";
@@ -141,6 +144,9 @@ public class PixelPane extends Pane {
         int row = toRow(y);
 
         if (row >= 0 && row < rows && col >= 0 && col < cols) {
+            if (isOnRecent) {
+                picker.setValue(recentColors.get(row));
+            }
             if (bucket) {
                 floodFillIterative(row, col, picker.getValue());
             } else {
@@ -213,7 +219,7 @@ public class PixelPane extends Pane {
         gridColors = new Color[this.rows][this.cols];
         this.name = name;
         this.picker = picker;
-
+        recentColors = new LinkedList<>();
 
         for (String str : metaData) {
             String[] spiltStr = str.split("//");
@@ -396,6 +402,10 @@ public class PixelPane extends Pane {
      */
     public int getColumns() {
         return this.cols;
+    }
+
+    public void setRecentToUse(int index) {
+        picker.setValue(recentColors.get(index));
     }
 
     public void saveGridlines(Color colStr) {
