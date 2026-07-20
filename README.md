@@ -43,5 +43,5 @@ java --module-path lib --add-modules javafx.controls,javafx.swing Driver
 ![Project Initialization](img/Initialize.png)
 
 #### Editing an existing artwork:
-![Editing Art](img/Edit-Art.png)
+![Editing Art](img/edit.png)
 
