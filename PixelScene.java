@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
+
+import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -19,6 +21,8 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
@@ -55,7 +59,7 @@ public class PixelScene extends Scene {
     private static BorderPane root;
     private final Color FONT_COLOR = Color.WHITE;
     private Label startMes, buildMes, canvasName, saveMessage, transparencyColor;
-    private Button startButton, createButton, saveAs, save, loadButton, discardButton, change, toggleGrid, flip;
+    private Button startButton, createButton,loadButton, change, toggleGrid, flip;
     private VBox startBox, settingsBox, sideMenu;
     private ComboBox<String> colorsBox;
     private TextField widthText, heightText;
@@ -64,9 +68,10 @@ public class PixelScene extends Scene {
     private ScrollPane scrollPane;
     private LinkedList<Button> loadList;
     private Image bucketOnImage = new Image("Saved_Images/bucket-on.png");
-    private Image bucketOffImage = new Image("saved_Images/bucket-off.png");
+    private Image bucketOffImage = new Image("Saved_Images/bucket-off.png");
     private ImageView bucketView = new ImageView(bucketOffImage);
     private CheckBox transparent;
+    private MenuButton saveOptions;
     
     /**
      * This constructor is used to create an instance of the pixel board.
@@ -206,7 +211,8 @@ public class PixelScene extends Scene {
     }
 
     private void processDiscard(ActionEvent e) {
-        initBuildMenu();
+        saveOptions.hide();
+        Platform.runLater(() -> {initBuildMenu();});
     }
 
     /**
@@ -424,21 +430,23 @@ public class PixelScene extends Scene {
 
         canvasName = new Label("Canvas Name:\n" + pane);
         canvasName.setTextFill(FONT_COLOR);
-        saveAs = new Button("Save As");
-        saveAs.setStyle("-fx-background-color: purple");
-        saveAs.setTextFill(FONT_COLOR);
-        saveAs.setOnAction(this::saveSettings);
+
+        saveOptions = new MenuButton("Save Options");
+        saveOptions.setStyle("-fx-background-color: purple");
+
+        MenuItem saveItem = new MenuItem("Save");
+        MenuItem saveAsItem = new MenuItem("Save As");
+        MenuItem discardItem = new MenuItem("Exit");
+
+        saveOptions.getItems().addAll(saveItem, saveAsItem, discardItem);
+        saveOptions.setTextFill(FONT_COLOR);
+        saveItem.setOnAction(this::saveNoExit);
+        saveAsItem.setOnAction(this::saveSettings);
+        discardItem.setOnAction(this::processDiscard);
+
         saveMessage = new Label("Last saved on:\n" + pixelPane.getLastSavedTime());
         saveMessage.setTextFill(Color.LIMEGREEN);
-        save = new Button("Save");
-        save.setStyle("-fx-background-color: purple");
-        save.setTextFill(FONT_COLOR);
-        save.setOnAction(this::saveNoExit);
 
-        discardButton = new Button("Exit");
-        discardButton.setStyle("-fx-background-color: darkorange");
-        discardButton.setTextFill(FONT_COLOR);
-        discardButton.setOnAction(this::processDiscard);
         change = new Button("Change\nGridlines");
         change.setMinSize(40, 20);
         change.setStyle("-fx-background-color: blue");
@@ -452,21 +460,13 @@ public class PixelScene extends Scene {
         toggleGrid.setOnAction(this::processGridToggle);
         toggleGrid.setCursor(Cursor.HAND);
 
-        saveAs.prefHeightProperty().bind(root.heightProperty().multiply(0.05));
-
-        save.prefWidthProperty().bind(saveAs.prefWidthProperty());
-        save.prefHeightProperty().bind(saveAs.prefHeightProperty());
-
-        discardButton.prefWidthProperty().bind(saveAs.prefWidthProperty());
-        discardButton.prefHeightProperty().bind(saveAs.prefHeightProperty());
-
         flip = new Button("Flip");
         flip.setStyle("-fx-background-color: pink");
         flip.setTextFill(FONT_COLOR);
         flip.setOnAction(this::processFlip);
 
-        change.prefWidthProperty().bind(saveAs.prefWidthProperty());
-        change.prefHeightProperty().bind(saveAs.prefHeightProperty());
+        change.prefWidthProperty().bind(saveOptions.prefWidthProperty());
+        change.prefHeightProperty().bind(saveOptions.prefHeightProperty());
 
         StackPane container = new StackPane(pane);
         scrollPane = new ScrollPane(container);
@@ -485,18 +485,22 @@ public class PixelScene extends Scene {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setStyle("-fx-background-color: transparent");
 
-        sideMenu = new VBox(picker, saveAs, save, discardButton, colorsBox, change, toggleGrid, flip, bucketView, canvasName, saveMessage, transparencyColor, removePicker, transparent);
+        sideMenu = new VBox(picker,saveOptions, colorsBox, change, toggleGrid, flip, bucketView, canvasName, saveMessage, transparencyColor, removePicker, transparent);
         picker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
         picker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.08));
         removePicker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
         removePicker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
         transparent.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
         transparent.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
-        saveAs.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.8));
         VBox.setVgrow(sideMenu, Priority.ALWAYS);
         sideMenu.setSpacing(10);
         sideMenu.setFillWidth(true);
         sideMenu.setAlignment(Pos.TOP_CENTER);
+
+        saveOptions.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.8));
+        saveOptions.prefHeightProperty().bind(root.heightProperty().multiply(0.05));
+        
+        sideMenu.prefWidthProperty().bind(root.widthProperty().multiply(0.15));
 
         root.setCenter(scrollPane);
         root.setRight(sideMenu);
