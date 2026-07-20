@@ -32,7 +32,7 @@ public class PixelPane extends Pane {
     private Color[][] gridColors;
     private Canvas canvas;
     private ColorPicker picker;
-    private Color backBoardColor = Color.WHITE;
+    private Color gridLineColor = Color.WHITE;
     private boolean bucket = false;
     private String name;
     private String lastSavedTime;
@@ -40,10 +40,10 @@ public class PixelPane extends Pane {
     private boolean redrawQueued = false;
     
     /**
-     * This constructor is generating a new instance of the LBPane.
-     * @param rows The rows of the light brite pane. NOTE: This can be no bigger than 100
-     * @param columns The columns of the light brite pane. NOTE: This can be no bigger than 100
-     * @param color The default color for each cell in the light brite
+     * This constructor is generating a new instance of the PixelPane.
+     * @param rows The rows of the light brite pane. NOTE: This can be no bigger than 128
+     * @param columns The columns of the light brite pane. NOTE: This can be no bigger than 128
+     * @param color The default color for each cell
      * @param wBound The maximum size of the width. This is used to resize button width accordingly
      * @param hBound The maximum size of the height. This is used to resize button height accordingly
      * @param picker The color picker that is used in the light brite
@@ -82,7 +82,7 @@ public class PixelPane extends Pane {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
         gc.setTransform(TRANSFORM);
-        gc.setFill(backBoardColor);
+        gc.setFill(gridLineColor);
 
         double size = DISPLAY_CELL_SIZE;
 
@@ -94,7 +94,7 @@ public class PixelPane extends Pane {
         }
 
         if (showGridLines) {
-            gc.setStroke(backBoardColor);
+            gc.setStroke(gridLineColor);
             gc.setLineWidth(1.0 / zoom);
             for (int i = 0; i <= rows; i++) {
                 gc.strokeLine(0, i * size, cols * size, i * size);
@@ -194,19 +194,19 @@ public class PixelPane extends Pane {
         if (col.startsWith("fx-background-color: ")) {
             col = col.replace("fx-background-color: ", "").trim();
         }
-        backBoardColor = Color.web(col);
+        gridLineColor = Color.web(col);
     }
 
     /**
-     * This constructor is used to load and rebuild an already existing image into a light brite pane. 
-     * @param metaData The meta data for the light bright, containing information on each peg's row index, column index, and color
-     * @param wBound The maximum size of the width. This is used to resize peg width accordingly
-     * @param hBound The maximum size of the height. This is used to resize peg height accordingly
-     * @param picker The color picker that is used in the light brite
+     * This constructor is used to load and rebuild an already existing image into a PixelPane. 
+     * @param metaData The meta data for the drawing, containing information on each pixel's row index, column index, and color
+     * @param wBound The maximum size of the width. This is used to resize pixel width accordingly
+     * @param hBound The maximum size of the height. This is used to resize pixel height accordingly
+     * @param picker The color picker that is used to draw
      */
     public PixelPane(LinkedList<String> metaData, ColorPicker picker, String name) {
         lastSavedTime = metaData.removeFirst();
-        backBoardColor = Color.web(metaData.removeFirst());
+        gridLineColor = Color.web(metaData.removeFirst());
         String[] dimStr = metaData.removeFirst().split("/");
         this.rows = Integer.parseInt(dimStr[0]);
         this.cols = Integer.parseInt(dimStr[1]);
@@ -268,9 +268,12 @@ public class PixelPane extends Pane {
 
     /**
      * This method creates a writable image of the canvas, only containing the grid and everything on it.
+     * @param transparent The boolean flag to indicate if the given color should be transparent
+     * @param value The color to make transparent if the flag is set
+     * @param scale The value to scale by using the nearest neighbor algorithm
      * @return A WritableImage object to be exported as a png file.
      */
-    public WritableImage exportImage(boolean transparent, Color value) {
+    public WritableImage exportImage(boolean transparent, Color value, int scale) {
         double oldZoom = zoom;
         double oldOffsetX = offSetX;
         double oldOffsetY = offSetY;
@@ -317,6 +320,10 @@ public class PixelPane extends Pane {
 
         drawGrid();
 
+        if (scale > 1) {
+            return scaleImage(image, scale);
+        }
+
         return image;
     }
 
@@ -333,6 +340,31 @@ public class PixelPane extends Pane {
                 gc.fillRect(col, row, 1, 1);
             }
         }
+    }
+
+    private WritableImage scaleImage(WritableImage src, int scale) {
+        int ow = (int) src.getWidth();
+        int oh = (int) src.getHeight();
+        int nw = ow * scale;
+        int nh = oh * scale;
+
+        WritableImage scaled = new WritableImage(nw, nh);
+
+        PixelReader reader = src.getPixelReader();
+        PixelWriter writer = scaled.getPixelWriter();
+
+        for (int y = 0; y < oh; y++) {
+            for (int x = 0; x < ow; x++) {
+                Color pixel = reader.getColor(x, y);
+
+                for (int dy = 0; dy < scale; dy++) {
+                    for (int dx = 0; dx < scale; dx++) {
+                        writer.setColor(x * scale + dx, y * scale + dy, pixel);
+                    }
+                }
+            }
+        }
+        return scaled;
     }
 
     /**
@@ -367,11 +399,11 @@ public class PixelPane extends Pane {
     }
 
     public void saveGridlines(Color colStr) {
-        backBoardColor = colStr;
+        gridLineColor = colStr;
     }
 
     public Color getGridLineColor() {
-        return backBoardColor;
+        return gridLineColor;
     }
 
     public boolean getBucketMode() {

@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
+
+import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -15,13 +17,18 @@ import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -54,19 +61,19 @@ public class PixelScene extends Scene {
 
     private static BorderPane root;
     private final Color FONT_COLOR = Color.WHITE;
-    private Label startMes, buildMes, canvasName, saveMessage, transparencyColor;
-    private Button startButton, createButton, saveAs, save, loadButton, discardButton, change, toggleGrid, flip;
+    private Label startMes, buildMes, canvasName, saveMessage;
+    private Button startButton, createButton,loadButton, change, toggleGrid, flip, discardButton;
     private VBox startBox, settingsBox, sideMenu;
     private ComboBox<String> colorsBox;
     private TextField widthText, heightText;
-    private ColorPicker picker, removePicker;
+    private ColorPicker picker;
     private PixelPane pixelPane;
     private ScrollPane scrollPane;
     private LinkedList<Button> loadList;
     private Image bucketOnImage = new Image("Saved_Images/bucket-on.png");
-    private Image bucketOffImage = new Image("saved_Images/bucket-off.png");
+    private Image bucketOffImage = new Image("Saved_Images/bucket-off.png");
     private ImageView bucketView = new ImageView(bucketOffImage);
-    private CheckBox transparent;
+    private MenuButton saveOptions;
     
     /**
      * This constructor is used to create an instance of the pixel board.
@@ -181,8 +188,6 @@ public class PixelScene extends Scene {
      */
     private void initGrid() {
         picker = new ColorPicker();
-        removePicker = new ColorPicker();
-        transparent = new CheckBox("Make this color\ntransparent");
         int height = 0, width = 0;
         try {
             height = Integer.parseInt(heightText.getText());
@@ -206,7 +211,8 @@ public class PixelScene extends Scene {
     }
 
     private void processDiscard(ActionEvent e) {
-        initBuildMenu();
+        saveOptions.hide();
+        Platform.runLater(() -> {initBuildMenu();});
     }
 
     /**
@@ -222,7 +228,6 @@ public class PixelScene extends Scene {
      * @param e ActionEvent object to activate this method when a button is clicked
      */
     private void processBuild(ActionEvent e) {
-        // root.getChildren().clear();
         initGrid();
     }
 
@@ -324,8 +329,6 @@ public class PixelScene extends Scene {
     private void processLoad(String fileName) {
         File input = new File("Saved_Images_Data", fileName + ".txt");
         picker = new ColorPicker();
-        removePicker = new ColorPicker();
-        transparent = new CheckBox("Make this color\ntransparent");
         try {
             Scanner scan = new Scanner(input);
             LinkedList<String> metaData = new LinkedList<String>();
@@ -358,8 +361,61 @@ public class PixelScene extends Scene {
         pixelPane.flipHorizontal();
     }
 
+    private void processExport(ActionEvent e) {
+        Dialog<ExportSettings> dialog = new Dialog<>();
+        dialog.setTitle("Export PNG");
+
+        ButtonType exportButton = new ButtonType("Export", ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(exportButton, ButtonType.CANCEL);
+        ColorPicker removePicker = new ColorPicker(Color.WHITE);
+        CheckBox removeCheck = new CheckBox("Make this color transparent");
+
+        ComboBox<Integer> box = new ComboBox<>(); 
+        box.getItems().addAll(1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24);
+        box.setValue(1);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+
+        grid.add(new Label("Transparency Color"), 0, 0);
+        grid.add(removePicker, 1, 0);
+        grid.add(removeCheck, 1, 1);
+        grid.add(new Label("Scale Value (nearest neighbor)"), 0, 2);
+        grid.add(box, 1, 2);
+        
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(button -> {
+            if (button == exportButton) {
+                return new ExportSettings(removePicker.getValue(), removeCheck.isSelected(), box.getValue());
+            }
+            return null;
+        });
+
+        ExportSettings settings = dialog.showAndWait().orElse(null);
+        if (settings == null) {
+            return;
+        }
+
+        exportOnly(pixelPane + "", settings);
+    }
+
+    private void exportOnly(String name, ExportSettings settings) {
+        WritableImage image = pixelPane.exportImage(settings.isTransparent(), settings.getTransparentValue(), settings.scaleByValue());
+
+        File output = new File("Saved_Images", name + ".png");
+        try {
+            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", output);
+            // System.out.println("Screenshot saved to " + output.getAbsolutePath()); for debugging
+        } catch (IOException exception) {
+            System.err.println("Error: Failed to save screenshot: " + exception.getMessage());
+            System.exit(1);
+        }
+    }
+
     /**
-     * This method saves the current lite brite pane open. A png screenshot of the PixelPane is saved in the Saved_Images folder
+     * This method saves the current PixelPane open. A png screenshot of the PixelPane is saved in the Saved_Images folder
      * and the metadata for it is saved in the Saved_Images_Data folder, both of which should be in this directory.
      * @param name String representation of the name of the PixelPane to save
      */
@@ -370,16 +426,6 @@ public class PixelScene extends Scene {
         pixelPane.setLastSavedTime(now.format(formatter));
         saveMessage.setText("Last saved on:\n" + pixelPane.getLastSavedTime());
 
-        WritableImage image = pixelPane.exportImage(transparent.isSelected(), removePicker.getValue());
-
-        File output = new File("Saved_Images", name + ".png");
-        try {
-            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", output);
-            // System.out.println("Screenshot saved to " + output.getAbsolutePath()); for debugging
-        } catch (IOException exception) {
-            System.err.println("Error: Failed to save screenshot: " + exception.getMessage());
-            System.exit(1);
-        }
         File boardData = new File("Saved_Images_Data", name + ".txt");
         try {
             FileWriter writer = new FileWriter(boardData);
@@ -418,27 +464,30 @@ public class PixelScene extends Scene {
         bucketView.setOnMouseClicked(this::processBucketClick);
         bucketView.setCursor(Cursor.HAND);
 
-        transparencyColor = new Label("Transparncy Color:");
-        transparencyColor.setTextFill(FONT_COLOR);
-        transparent.setTextFill(FONT_COLOR);
-
         canvasName = new Label("Canvas Name:\n" + pane);
         canvasName.setTextFill(FONT_COLOR);
-        saveAs = new Button("Save As");
-        saveAs.setStyle("-fx-background-color: purple");
-        saveAs.setTextFill(FONT_COLOR);
-        saveAs.setOnAction(this::saveSettings);
-        saveMessage = new Label("Last saved on:\n" + pixelPane.getLastSavedTime());
-        saveMessage.setTextFill(Color.LIMEGREEN);
-        save = new Button("Save");
-        save.setStyle("-fx-background-color: purple");
-        save.setTextFill(FONT_COLOR);
-        save.setOnAction(this::saveNoExit);
+
+        saveOptions = new MenuButton("Save Options");
+        saveOptions.setStyle("-fx-background-color: purple");
+
+        MenuItem saveItem = new MenuItem("Save");
+        MenuItem saveAsItem = new MenuItem("Save As");
+        MenuItem exportItem = new MenuItem("Export");
+
+        saveOptions.getItems().addAll(saveItem, saveAsItem, exportItem);
+        saveOptions.setTextFill(FONT_COLOR);
+        saveItem.setOnAction(this::saveNoExit);
+        saveAsItem.setOnAction(this::saveSettings);
+        exportItem.setOnAction(this::processExport);
 
         discardButton = new Button("Exit");
-        discardButton.setStyle("-fx-background-color: darkorange");
+        discardButton.setStyle("-fx-background-color: orange");
         discardButton.setTextFill(FONT_COLOR);
         discardButton.setOnAction(this::processDiscard);
+
+        saveMessage = new Label("Last saved on:\n" + pixelPane.getLastSavedTime());
+        saveMessage.setTextFill(Color.LIMEGREEN);
+
         change = new Button("Change\nGridlines");
         change.setMinSize(40, 20);
         change.setStyle("-fx-background-color: blue");
@@ -452,21 +501,10 @@ public class PixelScene extends Scene {
         toggleGrid.setOnAction(this::processGridToggle);
         toggleGrid.setCursor(Cursor.HAND);
 
-        saveAs.prefHeightProperty().bind(root.heightProperty().multiply(0.05));
-
-        save.prefWidthProperty().bind(saveAs.prefWidthProperty());
-        save.prefHeightProperty().bind(saveAs.prefHeightProperty());
-
-        discardButton.prefWidthProperty().bind(saveAs.prefWidthProperty());
-        discardButton.prefHeightProperty().bind(saveAs.prefHeightProperty());
-
         flip = new Button("Flip");
-        flip.setStyle("-fx-background-color: pink");
+        flip.setStyle("-fx-background-color: magenta");
         flip.setTextFill(FONT_COLOR);
         flip.setOnAction(this::processFlip);
-
-        change.prefWidthProperty().bind(saveAs.prefWidthProperty());
-        change.prefHeightProperty().bind(saveAs.prefHeightProperty());
 
         StackPane container = new StackPane(pane);
         scrollPane = new ScrollPane(container);
@@ -485,18 +523,22 @@ public class PixelScene extends Scene {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setStyle("-fx-background-color: transparent");
 
-        sideMenu = new VBox(picker, saveAs, save, discardButton, colorsBox, change, toggleGrid, flip, bucketView, canvasName, saveMessage, transparencyColor, removePicker, transparent);
+        sideMenu = new VBox(picker, saveOptions, discardButton, colorsBox, change, toggleGrid, flip, bucketView, canvasName, saveMessage);
         picker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
         picker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.08));
-        removePicker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
-        removePicker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
-        transparent.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
-        transparent.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
-        saveAs.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.8));
+        discardButton.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.3));
+        discardButton.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
+        flip.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.3));
+        flip.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
         VBox.setVgrow(sideMenu, Priority.ALWAYS);
         sideMenu.setSpacing(10);
         sideMenu.setFillWidth(true);
         sideMenu.setAlignment(Pos.TOP_CENTER);
+
+        saveOptions.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.8));
+        saveOptions.prefHeightProperty().bind(root.heightProperty().multiply(0.05));
+        
+        sideMenu.prefWidthProperty().bind(root.widthProperty().multiply(0.15));
 
         root.setCenter(scrollPane);
         root.setRight(sideMenu);
