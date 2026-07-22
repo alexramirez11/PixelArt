@@ -38,6 +38,7 @@ public class PixelPane extends Pane {
     private String lastSavedTime;
     private boolean showGridLines = true;
     private boolean redrawQueued = false;
+    private Runnable finderDeactivated;
     
     /**
      * This constructor is generating a new instance of the PixelPane.
@@ -118,8 +119,6 @@ public class PixelPane extends Pane {
         canvas.setOnMouseDragged(e -> {
             if (!finder) {
                 paintCell(e.getX(), e.getY());
-            } else {
-                findColor(e.getX(), e.getY());
             }
         });
         canvas.setOnScroll(e -> {
@@ -203,8 +202,16 @@ public class PixelPane extends Pane {
         int row = toRow(y);
         if (row >= 0 && row < rows && col >= 0 && col < cols) {
             picker.setValue(gridColors[row][col]);
-            toggleFinder();
+
+            finder = false;
+            if (finderDeactivated != null) {
+                finderDeactivated.run();
+            }
         }
+    }
+
+    public void setFinderDeactivated(Runnable finderDeactivated) {
+        this.finderDeactivated = finderDeactivated;
     }
 
     public Color[][] getGridColors() {
@@ -430,16 +437,16 @@ public class PixelPane extends Pane {
         return bucket;
     }
 
-    public void toggleBucket() {
-        bucket = !bucket;
+    public void setBucket(boolean mode) {
+        bucket = mode;
     }
 
     public boolean getFinderMode() {
         return finder;
     }
 
-    public void toggleFinder() {
-        finder = !finder;
+    public void setFinder(boolean mode) {
+        finder = mode;
     }
 
     public void setName(String name) {

@@ -46,6 +46,7 @@ import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -64,6 +65,7 @@ public class PixelScene extends Scene {
     private Label startMes, buildMes, canvasName, saveMessage;
     private Button startButton, createButton, loadButton, change, toggleGrid, flip, discardButton;
     private VBox startBox, settingsBox, sideMenu;
+    private HBox colorTools;
     private ComboBox<String> colorsBox;
     private TextField widthText, heightText;
     private ColorPicker picker;
@@ -348,19 +350,25 @@ public class PixelScene extends Scene {
     }
 
     private void processBucketClick(MouseEvent e) {
-        pixelPane.toggleBucket();
-        if (pixelPane.getBucketMode()) {
+        if (!pixelPane.getBucketMode()) {
+            pixelPane.setBucket(true);
+            pixelPane.setFinder(false);
+            finderView.setImage(magnifyOffImage);
             bucketView.setImage(bucketOnImage);
         } else {
+            pixelPane.setBucket(false);
             bucketView.setImage(bucketOffImage);
         }
     }
 
     private void processFinderClick(MouseEvent e) {
-        pixelPane.toggleFinder();
-        if (pixelPane.getFinderMode()) {
+        if (!pixelPane.getFinderMode()) {
+            pixelPane.setFinder(true);
             finderView.setImage(magnifyOnImage);
+            pixelPane.setBucket(false);
+            bucketView.setImage(bucketOffImage);
         } else {
+            pixelPane.setFinder(false);
             finderView.setImage(magnifyOffImage);
         }
     }
@@ -481,6 +489,12 @@ public class PixelScene extends Scene {
         finderView.setFitHeight(80);
         finderView.setOnMouseClicked(this::processFinderClick);
         finderView.setCursor(Cursor.HAND);
+        pane.setFinderDeactivated(() -> {
+            finderView.setImage(magnifyOffImage);
+        });
+
+        colorTools = new HBox(bucketView, finderView);
+        colorTools.setAlignment(Pos.CENTER);
 
         canvasName = new Label("Canvas Name:\n" + pane);
         canvasName.setTextFill(FONT_COLOR);
@@ -541,13 +555,15 @@ public class PixelScene extends Scene {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setStyle("-fx-background-color: transparent");
 
-        sideMenu = new VBox(picker, saveOptions, discardButton, colorsBox, change, toggleGrid, flip, bucketView, finderView, canvasName, saveMessage);
+        sideMenu = new VBox(picker, saveOptions, discardButton, colorsBox, change, toggleGrid, flip, colorTools, canvasName, saveMessage);
         picker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
         picker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.08));
         discardButton.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.3));
         discardButton.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
         flip.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.3));
         flip.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.05));
+        colorTools.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
+        colorTools.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.09));
         VBox.setVgrow(sideMenu, Priority.ALWAYS);
         sideMenu.setSpacing(10);
         sideMenu.setFillWidth(true);
