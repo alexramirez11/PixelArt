@@ -33,11 +33,12 @@ public class PixelPane extends Pane {
     private Canvas canvas;
     private ColorPicker picker;
     private Color gridLineColor = Color.WHITE;
-    private boolean bucket = false;
+    private boolean bucket = false, finder = false;
     private String name;
     private String lastSavedTime;
     private boolean showGridLines = true;
     private boolean redrawQueued = false;
+    private Runnable finderDeactivated;
     
     /**
      * This constructor is generating a new instance of the PixelPane.
@@ -108,8 +109,18 @@ public class PixelPane extends Pane {
     }
 
     private void mouseEvents() {
-        canvas.setOnMousePressed(e -> paintCell(e.getX(), e.getY()));
-        canvas.setOnMouseDragged(e -> paintCell(e.getX(), e.getY()));
+        canvas.setOnMousePressed(e -> {
+            if (!finder) {
+                paintCell(e.getX(), e.getY());
+            } else {
+                findColor(e.getX(), e.getY());
+            }
+        });
+        canvas.setOnMouseDragged(e -> {
+            if (!finder) {
+                paintCell(e.getX(), e.getY());
+            }
+        });
         canvas.setOnScroll(e -> {
             if (e.isInertia()) {
                 return;
@@ -186,6 +197,23 @@ public class PixelPane extends Pane {
             Math.abs(a.getOpacity() - b.getOpacity()) < threshold;
     }
 
+    private void findColor(double x, double y) {
+        int col = toColumn(x);
+        int row = toRow(y);
+        if (row >= 0 && row < rows && col >= 0 && col < cols) {
+            picker.setValue(gridColors[row][col]);
+
+            finder = false;
+            if (finderDeactivated != null) {
+                finderDeactivated.run();
+            }
+        }
+    }
+
+    public void setFinderDeactivated(Runnable finderDeactivated) {
+        this.finderDeactivated = finderDeactivated;
+    }
+
     public Color[][] getGridColors() {
         return gridColors;
     }
@@ -213,7 +241,6 @@ public class PixelPane extends Pane {
         gridColors = new Color[this.rows][this.cols];
         this.name = name;
         this.picker = picker;
-
 
         for (String str : metaData) {
             String[] spiltStr = str.split("//");
@@ -410,8 +437,16 @@ public class PixelPane extends Pane {
         return bucket;
     }
 
-    public void toggleBucket() {
-        bucket = !bucket;
+    public void setBucket(boolean mode) {
+        bucket = mode;
+    }
+
+    public boolean getFinderMode() {
+        return finder;
+    }
+
+    public void setFinder(boolean mode) {
+        finder = mode;
     }
 
     public void setName(String name) {
