@@ -62,7 +62,7 @@ public class PixelScene extends Scene {
     private static BorderPane root;
     private final Color FONT_COLOR = Color.WHITE;
     private Label startMes, buildMes, canvasName, saveMessage;
-    private Button startButton, createButton,loadButton, change, toggleGrid, flip, discardButton;
+    private Button startButton, createButton, loadButton, change, toggleGrid, flip, discardButton;
     private VBox startBox, settingsBox, sideMenu;
     private ComboBox<String> colorsBox;
     private TextField widthText, heightText;
@@ -73,6 +73,9 @@ public class PixelScene extends Scene {
     private Image bucketOnImage = new Image("Saved_Images/bucket-on.png");
     private Image bucketOffImage = new Image("Saved_Images/bucket-off.png");
     private ImageView bucketView = new ImageView(bucketOffImage);
+    private Image magnifyOnImage = new Image("Saved_Images/magnifying_on.png");
+    private Image magnifyOffImage = new Image("Saved_Images/magnifying_off.png");
+    private ImageView finderView = new ImageView(magnifyOffImage);
     private MenuButton saveOptions;
     
     /**
@@ -353,6 +356,15 @@ public class PixelScene extends Scene {
         }
     }
 
+    private void processFinderClick(MouseEvent e) {
+        pixelPane.toggleFinder();
+        if (pixelPane.getFinderMode()) {
+            finderView.setImage(magnifyOnImage);
+        } else {
+            finderView.setImage(magnifyOffImage);
+        }
+    }
+
     private void processGridToggle(ActionEvent e) {
         pixelPane.toggleGridLines();
     }
@@ -458,11 +470,17 @@ public class PixelScene extends Scene {
      * @param pane The PixelPane to initialize tools for
      */
     private void initTools(PixelPane pane) {
-        bucketView.setPreserveRatio(false);
+        bucketView.setPreserveRatio(true);
         bucketView.setFitWidth(80);
         bucketView.setFitHeight(80);
         bucketView.setOnMouseClicked(this::processBucketClick);
         bucketView.setCursor(Cursor.HAND);
+
+        finderView.setPreserveRatio(true);
+        finderView.setFitWidth(80);
+        finderView.setFitHeight(80);
+        finderView.setOnMouseClicked(this::processFinderClick);
+        finderView.setCursor(Cursor.HAND);
 
         canvasName = new Label("Canvas Name:\n" + pane);
         canvasName.setTextFill(FONT_COLOR);
@@ -523,7 +541,7 @@ public class PixelScene extends Scene {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setStyle("-fx-background-color: transparent");
 
-        sideMenu = new VBox(picker, saveOptions, discardButton, colorsBox, change, toggleGrid, flip, bucketView, canvasName, saveMessage);
+        sideMenu = new VBox(picker, saveOptions, discardButton, colorsBox, change, toggleGrid, flip, bucketView, finderView, canvasName, saveMessage);
         picker.prefWidthProperty().bind(sideMenu.widthProperty().multiply(1));
         picker.prefHeightProperty().bind(sideMenu.heightProperty().multiply(0.08));
         discardButton.prefWidthProperty().bind(sideMenu.widthProperty().multiply(0.3));

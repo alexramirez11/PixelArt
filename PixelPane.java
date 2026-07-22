@@ -25,7 +25,6 @@ public class PixelPane extends Pane {
     private final double DISPLAY_CELL_SIZE = 20;
     private final double MIN_ZOOM = 0.1;
     private final double MAX_ZOOM = 8.0;
-    private final int RECENT_CAPACITY = 5;
 
     private double zoom = 1.0;
     private double offSetX = 0, offSetY = 0;
@@ -34,12 +33,11 @@ public class PixelPane extends Pane {
     private Canvas canvas;
     private ColorPicker picker;
     private Color gridLineColor = Color.WHITE;
-    private boolean bucket = false, isOnRecent = false;
+    private boolean bucket = false, finder = false;
     private String name;
     private String lastSavedTime;
     private boolean showGridLines = true;
     private boolean redrawQueued = false;
-    private LinkedList<Color> recentColors;
     
     /**
      * This constructor is generating a new instance of the PixelPane.
@@ -54,7 +52,6 @@ public class PixelPane extends Pane {
         this.rows = rows;
         this.cols = columns;
         this.picker = picker;
-        recentColors = new LinkedList<>();
         lastSavedTime = "never";
         if (color == null) {
             color = "black";
@@ -111,8 +108,20 @@ public class PixelPane extends Pane {
     }
 
     private void mouseEvents() {
-        canvas.setOnMousePressed(e -> paintCell(e.getX(), e.getY()));
-        canvas.setOnMouseDragged(e -> paintCell(e.getX(), e.getY()));
+        canvas.setOnMousePressed(e -> {
+            if (!finder) {
+                paintCell(e.getX(), e.getY());
+            } else {
+                findColor(e.getX(), e.getY());
+            }
+        });
+        canvas.setOnMouseDragged(e -> {
+            if (!finder) {
+                paintCell(e.getX(), e.getY());
+            } else {
+                findColor(e.getX(), e.getY());
+            }
+        });
         canvas.setOnScroll(e -> {
             if (e.isInertia()) {
                 return;
@@ -144,9 +153,6 @@ public class PixelPane extends Pane {
         int row = toRow(y);
 
         if (row >= 0 && row < rows && col >= 0 && col < cols) {
-            if (isOnRecent) {
-                picker.setValue(recentColors.get(row));
-            }
             if (bucket) {
                 floodFillIterative(row, col, picker.getValue());
             } else {
@@ -192,6 +198,15 @@ public class PixelPane extends Pane {
             Math.abs(a.getOpacity() - b.getOpacity()) < threshold;
     }
 
+    private void findColor(double x, double y) {
+        int col = toColumn(x);
+        int row = toRow(y);
+        if (row >= 0 && row < rows && col >= 0 && col < cols) {
+            picker.setValue(gridColors[row][col]);
+            toggleFinder();
+        }
+    }
+
     public Color[][] getGridColors() {
         return gridColors;
     }
@@ -219,7 +234,6 @@ public class PixelPane extends Pane {
         gridColors = new Color[this.rows][this.cols];
         this.name = name;
         this.picker = picker;
-        recentColors = new LinkedList<>();
 
         for (String str : metaData) {
             String[] spiltStr = str.split("//");
@@ -404,10 +418,6 @@ public class PixelPane extends Pane {
         return this.cols;
     }
 
-    public void setRecentToUse(int index) {
-        picker.setValue(recentColors.get(index));
-    }
-
     public void saveGridlines(Color colStr) {
         gridLineColor = colStr;
     }
@@ -422,6 +432,14 @@ public class PixelPane extends Pane {
 
     public void toggleBucket() {
         bucket = !bucket;
+    }
+
+    public boolean getFinderMode() {
+        return finder;
+    }
+
+    public void toggleFinder() {
+        finder = !finder;
     }
 
     public void setName(String name) {
